@@ -30,9 +30,10 @@ The evaluation metric was **Root Mean Squared Error (RMSE)**.
 
 ## 📁 Project Structure
 
-- `notebook.ipynb`: Full EDA, feature engineering, and modeling workflow
-- `solution.csv`: Final predictions for submission
-- `best_xgb_model.joblib`: Serialized model for reuse
+- `model.py`: Full pipeline: preprocessing, model training (RF & XGBoost), Optuna tuning, evaluation, and submission generation
+- `new.py`: Inference script for generating predictions on test data using the trained model
+- `best_xgb_model.joblib`: Final XGBoost model saved after Optuna tuning
+- 
 
 ## 📊 Kaggle Notebook
 
