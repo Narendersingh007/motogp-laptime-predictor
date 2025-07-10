@@ -33,7 +33,6 @@ The evaluation metric was **Root Mean Squared Error (RMSE)**.
 - `model.py`: Full pipeline: preprocessing, model training (RF & XGBoost), Optuna tuning, evaluation, and submission generation
 - `new.py`: Inference script for generating predictions on test data using the trained model
 - `best_xgb_model.joblib`: Final XGBoost model saved after Optuna tuning
-- 
 
 ## 📊 Kaggle Notebook
 
