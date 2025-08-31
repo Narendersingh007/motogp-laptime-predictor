@@ -6,8 +6,6 @@ motogp-env/
 __pycache__/
 *.pyc
 
-
-
 # Ignore model checkpoints
 models/*.joblib
 
