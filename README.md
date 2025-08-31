@@ -100,4 +100,27 @@ cd motogp-laptime-predictor
 pip install -r requirements.txt
 streamlit run app.py
 ```
+## 🧪 Testing
+- Notebooks in `notebooks/` demonstrate EDA, experiments, and model validation
+- Visualizations and metric evaluations can be run interactively
+
+---
+
+## 📜 License
+- This project is licensed under **MIT License** – see [LICENSE](LICENSE) for details
+
+---
+
+## 🤝 Contributing
+- Fork the repository
+- Create a feature branch
+- Make your changes
+- Submit a pull request
+
+---
+
+## 📫 Contact
+- **Author:** Narender Singh
+- **GitHub:** [Narendersingh007](https://github.com/Narendersingh007)
+
 
