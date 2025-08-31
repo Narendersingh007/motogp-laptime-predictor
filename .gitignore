@@ -1,4 +1,19 @@
-train.csv
-test.csv
-train.csv
-test.csv
+# Ignore local environment
+motogp-env/
+.env/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore data files
+data/*.csv
+
+# Ignore model checkpoints
+models/*.joblib
+
+# Ignore Jupyter notebook checkpoints
+notebooks/.ipynb_checkpoints/
+
+# Ignore OS / editor files
+.DS_Store
