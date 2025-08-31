@@ -1,63 +1,103 @@
 # 🏍️ MotoGP Lap Time Predictor (Burnout 2025 Finalist)
 
-A regression project developed during the **Burnout 2025 Datathon**, organized by IEEE Computer Society MUJ. The goal was to predict MotoGP rider lap times using machine learning models on a rich dataset of racing statistics.
+A **Streamlit web app + ML pipeline** developed during the **Burnout 2025 Datathon** organized by IEEE Computer Society MUJ.  
+The project predicts **MotoGP rider lap times** and provides an **interactive analytics dashboard** to explore race data.  
 
-## 📌 Project Overview
+---
 
-This project was built as part of a 12-hour national-level data science competition hosted on **Kaggle**, with 124 participating teams. The competition involved exploratory data analysis, feature engineering, predictive modeling, and presenting findings in a final round with a judging panel.
+## 📌 Project Overview  
 
-Our team secured a **Top 15 finish** and was selected for **Round 2**, which involved a live 10-slide presentation and Q&A with judges.
+- Built during a **12-hour national-level data science hackathon** hosted on Kaggle  
+- **124 teams** participated — our team secured a **Top 15 finish** and reached **Round 2 (Finals)**  
+- Workflow included **EDA → Feature Engineering → Predictive Modeling → Hyperparameter Tuning → Live Presentation**  
+- Deployment-ready Streamlit app for **real-time predictions & analytics**  
 
-## 🔍 Problem Statement
+---
 
-Predict the **Lap Time (in seconds)** for MotoGP riders using a dataset containing:
+## 🔍 Problem Statement  
 
-- Rider stats
-- Lap-by-lap performance
-- Weather conditions
-- Track characteristics
-- Team & strategy data
+Predict the **Lap Time (in seconds)** for MotoGP riders using:  
+- Rider stats & experience  
+- Track characteristics  
+- Weather & environmental conditions  
+- Tire compounds & race strategy  
 
-The evaluation metric was **Root Mean Squared Error (RMSE)**.
+**Evaluation metric:** Root Mean Squared Error (RMSE)  
 
-## 🚀 Highlights
+---
 
-- Built regression models using **XGBoost** and **Random Forest**
-- **Hyperparameter tuning** with 50+ **Optuna trials**
-- Applied **cross-validation** and RMSE evaluation
-- Created a 10-slide presentation and live demo in Round 2
-- Answered judge questions in a real-time technical Q&A
+## 🚀 Key Highlights  
 
-## 📁 Project Structure
+- ⚡ **Models**: XGBoost (primary) + Random Forest (backup)  
+- 🎯 **Tuning**: 50+ Optuna trials for hyperparameter optimization  
+- 📊 **Analytics**: Lap time distributions, weather/temperature impacts, correlation heatmaps, feature importance, category-wise comparisons  
+- 🖥️ **App**: Streamlit dashboard with prediction form + analytics + model insights  
+- 🏆 **Competition**: Live 10-slide presentation + real-time Q&A with judges  
 
-- `model.py`: Full pipeline: preprocessing, model training (RF & XGBoost), Optuna tuning, evaluation, and submission generation
-- `new.py`: Inference script for generating predictions on test data using the trained model
-- `best_xgb_model.joblib`: Final XGBoost model saved after Optuna tuning
+---
 
-## 📊 Kaggle Notebook
+## 📂 Project Structure  
+```
+motogp-laptime-predictor/
+│── app.py              # Main Streamlit app
+│── requirements.txt    # Dependencies
+│── setup.py            # Install/setup file
+│── data/               # Training/test datasets (train.csv etc.)
+│── models/             # Trained ML models (XGBoost .joblib, etc.)
+│── utils/              # Helper scripts (imports, fixes, model utils)
+│── notebooks/          # Jupyter notebooks (EDA, experiments)
+│── .streamlit/         # Streamlit config
+```
 
-👉 [Click here to view the notebook](https://www.kaggle.com/code/narendersingh007/notebook0a56537ec2)
+---
 
-## 🧠 Tools & Libraries
+## ⚡ Streamlit App Features  
 
-- Python
-- Pandas, NumPy
-- XGBoost, Random Forest (from scikit-learn)
-- Optuna (for tuning)
-- Matplotlib, Seaborn
-- Jupyter Notebook
+### 🔮 **Lap Time Prediction**  
+Interactive form to input rider, track, and weather details → Predict lap times with confidence scores  
 
-## 🏆 Competition Details
+### 📈 **Analytics Dashboard**  
+- Lap Time distribution histograms  
+- Weather vs Lap Time impact (boxplots)  
+- Grid Position vs Lap Time scatter  
+- Temperature correlation plots  
+- Correlation heatmap (numeric features)  
+- Feature importance ranking  
+- Violin plots by race category  
 
-**Event:** Burnout 2025 – MotoGP Data Analytics Challenge  
-**Organizer:** IEEE Computer Society MUJ  
-**Platform:** Kaggle  
-**Duration:** 12 hours  
-**Participants:** 124 teams  
-**Result:** Top 15 finish + Final round presentation
+**🧾 Inferences** are displayed directly under each visualization for storytelling.  
 
-## ✅ Submission Deliverables
+---
 
-- `solution.csv` file with lap time predictions
-- Full `Jupyter Notebook` with EDA, feature engineering, and modeling
-- 10-slide presentation summarizing the approach and insights
+## 🧠 Tools & Libraries  
+
+- **Python**: Pandas, NumPy  
+- **ML**: XGBoost, Scikit-learn, Random Forest  
+- **Optimization**: Optuna  
+- **Visualization**: Plotly, Matplotlib, Seaborn  
+- **Deployment**: Streamlit  
+
+---
+
+## 🏆 Competition Details  
+
+- **Event:** Burnout 2025 – MotoGP Data Analytics Challenge  
+- **Organizer:** IEEE Computer Society MUJ  
+- **Platform:** Kaggle  
+- **Duration:** 12 hours  
+- **Participants:** 124 teams  
+- **Result:** Top 15 finish + Finals presentation  
+
+---
+
+## 🚀 Deployment  
+
+Run locally:  
+```bash
+git clone https://github.com/<your-username>/motogp-laptime-predictor.git
+cd motogp-laptime-predictor
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+
