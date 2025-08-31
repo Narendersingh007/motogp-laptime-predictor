@@ -3,6 +3,8 @@
 A **Streamlit web app + ML pipeline** developed during the **Burnout 2025 Datathon** organized by IEEE Computer Society MUJ.  
 The project predicts **MotoGP rider lap times** and provides an **interactive analytics dashboard** to explore race data.  
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://motogp-laptime-predictor.streamlit.app)
+
 ---
 
 ## 📌 Project Overview  
@@ -48,7 +50,6 @@ motogp-laptime-predictor/
 │── notebooks/          # Jupyter notebooks (EDA, experiments)
 │── .streamlit/         # Streamlit config
 ```
-
 ---
 
 ## ⚡ Streamlit App Features  
@@ -90,14 +91,13 @@ Interactive form to input rider, track, and weather details → Predict lap time
 
 ---
 
-## 🚀 Deployment  
 
-Run locally:  
+
+## 🔧 Run Locally  
 ```bash
 git clone https://github.com/<your-username>/motogp-laptime-predictor.git
 cd motogp-laptime-predictor
 pip install -r requirements.txt
 streamlit run app.py
 ```
-
 
