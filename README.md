@@ -95,7 +95,7 @@ Interactive form to input rider, track, and weather details → Predict lap time
 
 ## 🔧 Run Locally  
 ```bash
-git clone https://github.com/<your-username>/motogp-laptime-predictor.git
+git clone https://github.com/Narendersingh007/motogp-laptime-predictor.git
 cd motogp-laptime-predictor
 pip install -r requirements.txt
 streamlit run app.py
