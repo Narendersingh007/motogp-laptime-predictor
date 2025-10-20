@@ -3,13 +3,19 @@ import pandas as pd
 import numpy as np
 import sys
 import os
-import requests  
-import os
 
+# Add local directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Handle imports with detailed error messages
+# Handle imports and check for missing packages
 missing_packages = []
+
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    REQUESTS_AVAILABLE = False
+    missing_packages.append("requests")
 
 try:
     import joblib
@@ -102,9 +108,10 @@ def prepare_input_data(form_data):
     DataFrame ready for the model.
     """
     
-    # 1. Define the mappings for your categorical features.
-    # NOTE: These are 'best guesses'. The "correct" MLOps way
-    # is to save the original LabelEncoders, but this will work.
+    # 1. Define mappings for categorical features.
+    # TODO: For a true MLOps pipeline, these encoders should be 
+    # saved as an artifact (like a .pkl file) from the training script
+    # and loaded here to guarantee mappings are identical.
     category_map = {"MotoGP": 0, "Moto2": 1, "Moto3": 2}
     track_condition_map = {"Dry": 0, "Wet": 1, "Drying": 2}
     tire_map = {"Soft": 0, "Medium": 1, "Hard": 2}
@@ -120,7 +127,7 @@ def prepare_input_data(form_data):
         'sequence': 1,
         'position': form_data['grid_position'], # Use grid_position as default
         'points': form_data['championship_points'], # Use championship_points as default
-        'track': 0,         # CRITICAL: 'track' feature is missing from form. Using 0 as a default.
+        'track': 0,         # CRITICAL: 'track' feature is missing. Using 0 as a default.
         'air': 25,          # Default air temp
         'ground': 30,       # Default ground temp
         'min_year': 2020,
@@ -130,7 +137,7 @@ def prepare_input_data(form_data):
         'with_points': 7,
         'podiums': 1,
         
-        # --- Features FROM the form (will be overwritten next) ---
+        # --- Placeholders for features FROM the form ---
         'category_x': 0,
         'Circuit_Length_km': 0.0,
         'Laps': 0,
@@ -192,32 +199,27 @@ def prepare_input_data(form_data):
         'wins', 'min_year', 'max_year', 'years_active'
     ]
     
-    # Create a single-row DataFrame
     input_df = pd.DataFrame([model_input])
     
     # Reorder columns to match model's training order
     input_df = input_df[expected_columns]
     
     return input_df
-# Load model function
+
 @st.cache_resource
 def load_model():
-    if not JOBLIB_AVAILABLE:
+    if not JOBLIB_AVAILABLE or not REQUESTS_AVAILABLE:
+        st.error("Missing critical packages (joblib or requests). Cannot load model.")
         return None, False
 
-    # --- This is the new logic ---
     MODEL_URL = "https://github.com/Narendersingh007/motogp-laptime-predictor/releases/download/v1.0-model/best_xgb_model.joblib"
     MODEL_PATH = "models/best_xgb_model.joblib"
 
-    # Check if model file already exists
     if not os.path.exists(MODEL_PATH):
         st.info("Downloading model... This may take a moment.")
-        
-        # Ensure the 'models' directory exists
         os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
         
         try:
-            # Download the file
             with requests.get(MODEL_URL, stream=True) as r:
                 r.raise_for_status()
                 with open(MODEL_PATH, 'wb') as f:
@@ -227,28 +229,25 @@ def load_model():
         except Exception as e:
             st.error(f"Error downloading model: {e}")
             return None, False
-    # --- End of new logic ---
 
     try:
         model = joblib.load(MODEL_PATH)
         return model, True
     except FileNotFoundError:
-        # This shouldn't happen now, but good to keep as a fallback
         return None, False
     except Exception as e:
         st.error(f"Error loading model: {str(e)}")
         return None, False
 
-# Initialize session state
 if 'predictions_made' not in st.session_state:
     st.session_state.predictions_made = 0
 
 # Sidebar
 with st.sidebar:
-    # Banner for missing packages status
     if missing_packages:
         st.error(f"❌ Missing packages: {', '.join(missing_packages)}")
-   
+    else:
+        st.success("✅ All required packages installed")
 
     st.markdown("### 🏆 Project Highlights")
     st.info("""
@@ -265,8 +264,6 @@ with st.sidebar:
         st.metric("RMSE", "~2.45", delta="-0.12")
     with col2:
         st.metric("R² Score", "0.87", delta="+0.05")
-    
-    
 
 # Main content tabs
 tab1, tab2, tab3, tab4 = st.tabs(["🔮 Predict", "📈 Analytics", "🎯 Model Info", "📋 About"])
@@ -274,14 +271,12 @@ tab1, tab2, tab3, tab4 = st.tabs(["🔮 Predict", "📈 Analytics", "🎯 Model 
 with tab1:
     st.header("Make Lap Time Predictions")
     
-    # Check if model is loaded
     model, model_loaded = load_model()
     
     if not model_loaded:
         if JOBLIB_AVAILABLE:
-            st.info("ℹ️ Model file not found. Using simulation mode for demo.")
+            st.info("ℹ️ Model file not found or failed to load. Using simulation mode for demo.")
     
-    # Input form
     with st.form("prediction_form"):
         st.subheader("🏁 Race Parameters")
         
@@ -324,10 +319,8 @@ with tab1:
             years_active = st.number_input("Years Active", min_value=1, max_value=20, value=5)
             wins = st.number_input("Career Wins", min_value=0, max_value=100, value=10)
         
-       # Submit button
         submitted = st.form_submit_button("🚀 Predict Lap Time", use_container_width=True)
         
-        # This is the single, combined block for logic
         if submitted:
             prediction = 0.0  # Initialize prediction variable
             
@@ -383,11 +376,13 @@ with tab1:
                 </div>
                 """, unsafe_allow_html=True)
 
-            # --- This is the ONE set of performance metrics ---
+            # --- Performance metrics (shown for both real and simulated) ---
             col1, col2, col3 = st.columns(3)
             with col1:
-                delta = np.random.uniform(-2.5, 2.5)
-                st.metric("vs Average", f"{prediction:.3f}s", f"{delta:.3f}s")
+                # Using the real average lap time from the sample data
+                AVERAGE_LAP_TIME = 90.11572866666667
+                delta = prediction - AVERAGE_LAP_TIME
+                st.metric("vs Average", f"{prediction:.3f}s", f"{delta:+.3f}s")
             with col2:
                 pace = "🔥 Fast" if prediction < 88 else "⚡ Average" if prediction < 95 else "🐌 Slow"
                 st.metric("Pace Rating", pace, "")
@@ -395,139 +390,143 @@ with tab1:
                 confidence = 95 if model_loaded else 75
                 st.metric("Confidence", f"{confidence}%", "")
             
-            # --- This is the ONE session state update ---
             st.session_state.predictions_made += 1
 
 with tab2:
     st.header("📈 Analytics Dashboard")
+
+    # Load model and feature names for importance plot
+    model, model_loaded = load_model()
+    expected_columns = [
+        'category_x', 'Circuit_Length_km', 'Laps', 'Grid_Position', 'Avg_Speed_kmh',
+        'Track_Condition', 'Humidity_%', 'Tire_Compound_Front', 'Tire_Compound_Rear',
+        'Penalty', 'Championship_Points', 'Championship_Position', 'Session',
+        'year_x', 'sequence', 'position', 'points', 'Corners_per_Lap',
+        'Tire_Degradation_Factor_per_Lap', 'Pit_Stop_Duration_Seconds',
+        'Ambient_Temperature_Celsius', 'Track_Temperature_Celsius', 'weather',
+        'track', 'air', 'ground', 'starts', 'finishes', 'with_points', 'podiums',
+        'wins', 'min_year', 'max_year', 'years_active'
+    ]
     
     if PLOTLY_AVAILABLE:
-        # Sample data for visualization
         @st.cache_data
-        def generate_sample_data():
-            # In a future update, this could load from 'data/' if real CSVs exist.
-            np.random.seed(42)
-            data = {
-                'Lap_Time': np.random.normal(90, 6, 1000),
-                'Circuit_Length': np.random.uniform(3.0, 6.0, 1000),
-                'Grid_Position': np.random.randint(1, 25, 1000),
-                'Humidity': np.random.randint(30, 90, 1000),
-                'Ambient_Temperature': np.random.uniform(15, 40, 1000),
-                'Category': np.random.choice(['MotoGP', 'Moto2', 'Moto3'], 1000),
-                'Weather': np.random.choice(['Sunny', 'Cloudy', 'Rainy'], 1000)
-            }
-            return pd.DataFrame(data)
-        
-        df_sample = generate_sample_data()
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Lap time distribution
-            if 'Lap_Time' in df_sample.columns:
-                fig1 = px.histogram(df_sample, x='Lap_Time', nbins=40, 
-                                   title="Lap Time Distribution",
-                                   color_discrete_sequence=['#FF6B35'])
-                fig1.update_layout(showlegend=False)
-                st.plotly_chart(fig1, use_container_width=True)
-                st.markdown("**Inference:** Most lap times are centered around 90s with a normal distribution, but long-tail outliers exist.")
-            else:
-                st.info("Column 'Lap_Time' not found in dataset.")
-            
-            # Grid position vs lap time
-            if 'Grid_Position' in df_sample.columns and 'Lap_Time' in df_sample.columns and 'Category' in df_sample.columns:
-                fig3 = px.scatter(df_sample, x='Grid_Position', y='Lap_Time',
-                                 color='Category', title="Grid Position vs Lap Time")
-                st.plotly_chart(fig3, use_container_width=True)
-                st.markdown("**Inference:** Riders starting further back generally record slower lap times.")
-            elif not ('Grid_Position' in df_sample.columns):
-                st.info("Column 'Grid_Position' not found in dataset.")
-            elif not ('Lap_Time' in df_sample.columns):
-                st.info("Column 'Lap_Time' not found in dataset.")
-            elif not ('Category' in df_sample.columns):
-                st.info("Column 'Category' not found in dataset.")
-        
-        with col2:
-            # Weather impact
-            if 'Weather' in df_sample.columns and 'Lap_Time' in df_sample.columns:
-                fig2 = px.box(df_sample, x='Weather', y='Lap_Time',
-                              title="Weather Impact on Lap Times",
-                              color_discrete_sequence=['#FF6B35'])
-                st.plotly_chart(fig2, use_container_width=True)
-                st.markdown("**Inference:** Rainy conditions significantly increase lap times compared to dry.")
-            elif not ('Weather' in df_sample.columns):
-                st.info("Column 'Weather' not found in dataset.")
-            elif not ('Lap_Time' in df_sample.columns):
-                st.info("Column 'Lap_Time' not found in dataset.")
-            
-            # Temperature correlation
-            if 'Ambient_Temperature' in df_sample.columns and 'Lap_Time' in df_sample.columns:
-                fig4 = px.scatter(df_sample, x='Ambient_Temperature', y='Lap_Time',
-                                 title="Temperature vs Lap Time",
-                                 color_discrete_sequence=['#FF6B35'])
-                st.plotly_chart(fig4, use_container_width=True)
-                st.markdown("**Inference:** Higher ambient temperature shows a mild positive correlation with lap times.")
-            elif not ('Ambient_Temperature' in df_sample.columns):
-                st.info("Column 'Ambient_Temperature' not found in dataset.")
-            elif not ('Lap_Time' in df_sample.columns):
-                st.info("Column 'Lap_Time' not found in dataset.")
-        
-        # Feature importance
-        st.subheader("🎯 Feature Importance")
-        importance_data = {
-            'Feature': ['Grid_Position', 'Circuit_Length', 'Avg_Speed', 'Track_Temperature', 
-                       'Humidity', 'Championship_Position', 'Tire_Degradation', 'Weather'],
-            'Importance': [0.25, 0.18, 0.15, 0.12, 0.10, 0.08, 0.07, 0.05]
-        }
-        importance_df = pd.DataFrame(importance_data)
-        
-        fig5 = px.bar(importance_df, x='Importance', y='Feature', orientation='h',
-                      title="Model Feature Importance",
-                      color='Importance', color_continuous_scale='Oranges')
-        fig5.update_layout(showlegend=False, yaxis={'categoryorder':'total ascending'})
-        st.plotly_chart(fig5, use_container_width=True)
-        st.markdown("**Inference:** Grid Position and Circuit Length are the dominant predictors.")
-
-        # --- Additional refined visualizations ---
-
-        # Correlation heatmap (matplotlib + seaborn)
-        if 'seaborn' not in sys.modules:
+        def load_real_data():
             try:
-                import seaborn as sns
-            except ImportError:
-                sns = None
-        else:
-            import seaborn as sns
-        if MATPLOTLIB_AVAILABLE and ('seaborn' in sys.modules or 'sns' in locals()):
-            # Only include features present in df_sample
-            st.subheader("📊 Correlation Heatmap")
-            import matplotlib.pyplot as plt
-            import seaborn as sns
-            corr_features = ['Lap_Time', 'Circuit_Length', 'Grid_Position', 'Humidity', 'Ambient_Temperature']
-            present_corr_features = [f for f in corr_features if f in df_sample.columns]
-            if len(present_corr_features) >= 2:
-                corr = df_sample[present_corr_features].corr()
-                fig_corr, ax = plt.subplots(figsize=(5, 4))
-                sns.heatmap(corr, annot=True, cmap='Oranges', ax=ax, fmt=".2f", linewidths=0.5)
-                ax.set_title("Correlation Heatmap of Numeric Features")
-                st.pyplot(fig_corr, use_container_width=True)
-                st.markdown("**Inference:** Grid Position and Circuit Length are most strongly correlated with lap times, while weather shows weaker correlation.")
-            else:
-                st.info("Not enough numeric features available for correlation heatmap.")
+                df = pd.read_csv("data/train_sample.csv")
+                return df
+            except FileNotFoundError:
+                st.error("Sample data file 'data/train_sample.csv' not found.")
+                return pd.DataFrame()
 
-        # Violin plot (plotly) for Lap_Time by Category
-        st.subheader("🎻 Lap Time Distribution by Category")
-        if 'Category' in df_sample.columns and 'Lap_Time' in df_sample.columns:
-            fig_violin = px.violin(df_sample, x='Category', y='Lap_Time', color='Category',
-                                   box=True, points="all", title="Lap Time by Category",
-                                   color_discrete_sequence=px.colors.qualitative.Set2)
-            st.plotly_chart(fig_violin, use_container_width=True)
-            st.markdown("**Inference:** MotoGP class has slightly higher lap times compared to Moto2 and Moto3 due to longer tracks.")
-        elif not ('Category' in df_sample.columns):
-            st.info("Column 'Category' not found in dataset.")
-        elif not ('Lap_Time' in df_sample.columns):
-            st.info("Column 'Lap_Time' not found in dataset.")
+        df_sample = load_real_data()
         
+        if df_sample.empty:
+            st.warning("Could not load sample data. Analytics tab is empty.")
+        else:
+            st.success("✅ Real data loaded for analytics!")
+            col1, col2 = st.columns(2)
+    
+            with col1:
+                # Lap time distribution
+                if 'Lap_Time_Seconds' in df_sample.columns:
+                    fig1 = px.histogram(df_sample, x='Lap_Time_Seconds', nbins=40, 
+                                       title="Lap Time Distribution",
+                                       color_discrete_sequence=['#FF6B35'])
+                    fig1.update_layout(showlegend=False)
+                    st.plotly_chart(fig1, use_container_width=True)
+                    st.markdown("**Inference:** Most lap times are centered around 90s with a normal distribution, but long-tail outliers exist.")
+                else:
+                    st.info("Column 'Lap_Time_Seconds' not found in dataset.")
+    
+                # Grid position vs lap time
+                if 'Grid_Position' in df_sample.columns and 'Lap_Time_Seconds' in df_sample.columns and 'category_x' in df_sample.columns:
+                    fig3 = px.scatter(df_sample, x='Grid_Position', y='Lap_Time_Seconds',
+                                     color='category_x', title="Grid Position vs Lap Time")
+                    st.plotly_chart(fig3, use_container_width=True)
+                    st.markdown("**Inference:** Riders starting further back generally record slower lap times.")
+                else:
+                    st.info("Required columns for scatter plot not found.")
+    
+            with col2:
+                # Weather impact
+                if 'weather' in df_sample.columns and 'Lap_Time_Seconds' in df_sample.columns:
+                    fig2 = px.box(df_sample, x='weather', y='Lap_Time_Seconds',
+                                  title="Weather Impact on Lap Times",
+                                  color_discrete_sequence=['#FF6B35'])
+                    st.plotly_chart(fig2, use_container_width=True)
+                    st.markdown("**Inference:** Rainy conditions significantly increase lap times compared to dry.")
+                else:
+                    st.info("Required columns for weather plot not found.")
+    
+                # Temperature correlation
+                if 'Ambient_Temperature_Celsius' in df_sample.columns and 'Lap_Time_Seconds' in df_sample.columns:
+                    fig4 = px.scatter(df_sample, x='Ambient_Temperature_Celsius', y='Lap_Time_Seconds',
+                                     title="Temperature vs Lap Time",
+                                     color_discrete_sequence=['#FF6B35'])
+                    st.plotly_chart(fig4, use_container_width=True)
+                    st.markdown("**Inference:** Higher ambient temperature shows a mild positive correlation with lap times.")
+                else:
+                    st.info("Required columns for temperature plot not found.")
+    
+            # Feature importance
+            st.subheader("🎯 Model Feature Importance (Real)")
+            if model_loaded:
+                importances = model.feature_importances_
+                
+                importance_df = pd.DataFrame({
+                    'Feature': expected_columns,
+                    'Importance': importances
+                }).sort_values(by="Importance", ascending=False).head(15) # Get top 15
+                
+                fig5 = px.bar(importance_df, x='Importance', y='Feature', orientation='h',
+                              title="Top 15 Model Feature Importances",
+                              color='Importance', color_continuous_scale='Oranges')
+                fig5.update_layout(showlegend=False, yaxis={'categoryorder':'total ascending'})
+                st.plotly_chart(fig5, use_container_width=True)
+                st.markdown("**Inference:** This plot shows the *actual* features the model uses, sorted by importance.")
+            else:
+                st.info("Model not loaded, cannot display real feature importances.")
+    
+            # --- Additional refined visualizations ---
+    
+            # Correlation heatmap (matplotlib + seaborn)
+            if 'seaborn' not in sys.modules:
+                try:
+                    import seaborn as sns
+                except ImportError:
+                    sns = None
+            else:
+                import seaborn as sns
+                
+            if MATPLOTLIB_AVAILABLE and ('seaborn' in sys.modules or 'sns' in locals()):
+                st.subheader("📊 Correlation Heatmap")
+                import matplotlib.pyplot as plt
+                import seaborn as sns
+                # Use real column names
+                corr_features = ['Lap_Time_Seconds', 'Circuit_Length_km', 'Grid_Position', 'Humidity_%', 'Ambient_Temperature_Celsius']
+                present_corr_features = [f for f in corr_features if f in df_sample.columns]
+    
+                if len(present_corr_features) >= 2:
+                    corr = df_sample[present_corr_features].corr()
+                    fig_corr, ax = plt.subplots(figsize=(3, 2))
+                    sns.heatmap(corr, annot=True, cmap='Oranges', ax=ax, fmt=".2f", linewidths=0.5)
+                    ax.set_title("Correlation Heatmap of Numeric Features")
+                    st.pyplot(fig_corr, use_container_width=True)
+                    st.markdown("**Inference:** Grid Position and Circuit Length are most strongly correlated with lap times.")
+                else:
+                    st.info(f"Not enough numeric features available for correlation heatmap. Found: {present_corr_features}")
+    
+            # Violin plot (plotly) for Lap_Time by Category
+            st.subheader("🎻 Lap Time Distribution by Category")
+            if 'category_x' in df_sample.columns and 'Lap_Time_Seconds' in df_sample.columns:
+                fig_violin = px.violin(df_sample, x='category_x', y='Lap_Time_Seconds', color='category_x',
+                                       box=True, points="all", title="Lap Time by Category",
+                                       color_discrete_sequence=px.colors.qualitative.Set2)
+                st.plotly_chart(fig_violin, use_container_width=True)
+                st.markdown("**Inference:** MotoGP class (0) has slightly higher lap times compared to Moto2 (1) and Moto3 (2).")
+            else:
+                st.info("Required columns for violin plot not found.")
+    
     else:
         st.error("📊 Plotly not available for visualizations. Please install: `pip install plotly`")
         st.info("The analytics features require plotly for interactive charts.")
@@ -607,21 +606,21 @@ with tab4:
     - **Our Achievement**: Top 15 finish + Finals qualification
     
     #### 🚀 Our Approach:
-    1. **Exploratory Data Analysis** - Understanding patterns in racing data
-    2. **Feature Engineering** - Creating meaningful predictors
-    3. **Model Selection** - Testing multiple algorithms
-    4. **Hyperparameter Optimization** - Using Optuna for best performance
-    5. **Cross-Validation** - Ensuring robust predictions
-    6. **Final Presentation** - 10-slide live demo with Q&A
+    1. **Exploratory Data Analysis** - Understanding patterns in racing.
+    2. **Feature Engineering** - Creating meaningful predictors.
+    3. **Model Selection** - Testing multiple algorithms.
+    4. **Hyperparameter Optimization** - Using Optuna for best performance.
+    5. **Cross-Validation** - Ensuring robust predictions.
+    6. **Final Presentation** - 10-slide live demo with Q&A.
     
     ### 🛠️ Technical Implementation
     
     Our solution combines traditional machine learning with modern optimization:
-    - **Data Preprocessing**: Handled missing values, encoded categoricals
-    - **Model Training**: XGBoost as primary, Random Forest as backup  
-    - **Optimization**: Optuna for automated hyperparameter tuning
-    - **Validation**: Stratified splits and cross-validation
-    - **Evaluation**: RMSE as primary metric
+    - **Data Preprocessing**: Handled missing values, encoded categoricals.
+    - **Model Training**: XGBoost as primary, Random Forest as backup.  
+    - **Optimization**: Optuna for automated hyperparameter tuning.
+    - **Validation**: Stratified splits and cross-validation.
+    - **Evaluation**: RMSE as primary metric.
     """)
 
 # Footer
