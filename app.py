@@ -327,44 +327,27 @@ with tab1:
        # Submit button
         submitted = st.form_submit_button("🚀 Predict Lap Time", use_container_width=True)
         
+        # This is the single, combined block for logic
         if submitted:
+            prediction = 0.0  # Initialize prediction variable
+            
             if model_loaded:
                 # --- REAL PREDICTION LOGIC ---
-                
-                # 1. Collect all form inputs into a dictionary
                 form_data = {
-                    'category': category,
-                    'circuit_length': circuit_length,
-                    'laps': laps,
-                    'grid_position': grid_position,
-                    'avg_speed': avg_speed,
-                    'track_condition': track_condition,
-                    'humidity': humidity,
-                    'tire_front': tire_front,
-                    'tire_rear': tire_rear,
-                    'ambient_temp': ambient_temp,
-                    'track_temp': track_temp,
-                    'championship_points': championship_points,
-                    'championship_pos': championship_pos,
-                    'penalty': penalty,
-                    'session': session,
-                    'corners_per_lap': corners_per_lap,
-                    'tire_degradation': tire_degradation,
-                    'pit_duration': pit_duration,
-                    'weather': weather,
-                    'years_active': years_active,
-                    'wins': wins
+                    'category': category, 'circuit_length': circuit_length, 'laps': laps,
+                    'grid_position': grid_position, 'avg_speed': avg_speed, 'track_condition': track_condition,
+                    'humidity': humidity, 'tire_front': tire_front, 'tire_rear': tire_rear,
+                    'ambient_temp': ambient_temp, 'track_temp': track_temp, 'championship_points': championship_points,
+                    'championship_pos': championship_pos, 'penalty': penalty, 'session': session,
+                    'corners_per_lap': corners_per_lap, 'tire_degradation': tire_degradation,
+                    'pit_duration': pit_duration, 'weather': weather, 'years_active': years_active, 'wins': wins
                 }
                 
-                # 2. Call the translator function
                 try:
                     input_df = prepare_input_data(form_data)
-                    
-                    # 3. Make the prediction!
                     prediction_array = model.predict(input_df)
                     prediction = prediction_array[0] # Get the single prediction value
                     
-                    # 4. Display the real prediction
                     st.markdown(f"""
                     <div class="prediction-result">
                         <h2>🏁 Predicted Lap Time (Real Model)</h2>
@@ -389,7 +372,6 @@ with tab1:
                 
                 prediction = base_time * weather_factor * tire_factor * track_factor + np.random.normal(0, 0.8)
                 
-                # Display simulation prediction
                 st.markdown(f"""
                 <div class="prediction-result">
                     <h2>🏁 Predicted Lap Time (Simulation)</h2>
@@ -401,7 +383,7 @@ with tab1:
                 </div>
                 """, unsafe_allow_html=True)
 
-            # Performance context (shown for both real and simulated)
+            # --- This is the ONE set of performance metrics ---
             col1, col2, col3 = st.columns(3)
             with col1:
                 delta = np.random.uniform(-2.5, 2.5)
@@ -413,56 +395,7 @@ with tab1:
                 confidence = 95 if model_loaded else 75
                 st.metric("Confidence", f"{confidence}%", "")
             
-            st.session_state.predictions_made += 1
-            # Display prediction
-            st.markdown(f"""
-            <div class="prediction-result">
-                <h2>🏁 Predicted Lap Time</h2>
-                <h1 style="font-size: 3rem; margin: 0;">{prediction:.3f} seconds</h1>
-                <p style="font-size: 1.2rem; margin-top: 1rem;">
-                    Equivalent to {prediction//60:.0f}:{prediction%60:06.3f}
-                </p>
-                {'<p style="color: #FFD700;">⚠️ Using simulation (model not loaded)</p>' if not model_loaded else ''}
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Performance context
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                delta = np.random.uniform(-2.5, 2.5)
-                st.metric("vs Average", f"{prediction:.3f}s", f"{delta:.3f}s")
-            with col2:
-                pace = "🔥 Fast" if prediction < 88 else "⚡ Average" if prediction < 95 else "🐌 Slow"
-                st.metric("Pace Rating", pace, "")
-            with col3:
-                confidence = 95 if model_loaded else 75
-                st.metric("Confidence", f"{confidence}%", "")
-            
-            st.session_state.predictions_made += 1
-            # Display prediction
-            st.markdown(f"""
-            <div class="prediction-result">
-                <h2>🏁 Predicted Lap Time</h2>
-                <h1 style="font-size: 3rem; margin: 0;">{prediction:.3f} seconds</h1>
-                <p style="font-size: 1.2rem; margin-top: 1rem;">
-                    Equivalent to {prediction//60:.0f}:{prediction%60:06.3f}
-                </p>
-                {'' if model_loaded else '<p style="color: #FFD700;">⚠️ Simulation Mode (Install packages for real predictions)</p>'}
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Performance context
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                delta = np.random.uniform(-2.5, 2.5)
-                st.metric("vs Average", f"{prediction:.3f}s", f"{delta:.3f}s")
-            with col2:
-                pace = "🔥 Fast" if prediction < 88 else "⚡ Average" if prediction < 95 else "🐌 Slow"
-                st.metric("Pace Rating", pace, "")
-            with col3:
-                confidence = 95 if model_loaded else 75
-                st.metric("Confidence", f"{confidence}%", "")
-            
+            # --- This is the ONE session state update ---
             st.session_state.predictions_made += 1
 
 with tab2:
