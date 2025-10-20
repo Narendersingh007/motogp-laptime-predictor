@@ -6,7 +6,6 @@ import os
 import requests  
 import os
 
-# Add current directory to Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Handle imports with detailed error messages
@@ -99,14 +98,11 @@ st.markdown('<p class="sub-header">Burnout 2025 Finalist | Predict MotoGP lap ti
 
 # Load model function
 @st.cache_resource
-# Load model function
-@st.cache_resource
 def load_model():
     if not JOBLIB_AVAILABLE:
         return None, False
 
     # --- This is the new logic ---
-    # PASTE THE URL YOU COPIED FROM GITHUB RELEASES HERE
     MODEL_URL = "https://github.com/Narendersingh007/motogp-laptime-predictor/releases/download/v1.0-model/best_xgb_model.joblib"
     MODEL_PATH = "models/best_xgb_model.joblib"
 
@@ -149,8 +145,7 @@ with st.sidebar:
     # Banner for missing packages status
     if missing_packages:
         st.error(f"❌ Missing packages: {', '.join(missing_packages)}")
-    else:
-        st.success("✅ All required packages installed")
+   
 
     st.markdown("### 🏆 Project Highlights")
     st.info("""
@@ -168,14 +163,6 @@ with st.sidebar:
     with col2:
         st.metric("R² Score", "0.87", delta="+0.05")
     
-    # Show package status
-    st.markdown("### 📦 Package Status")
-    packages_status = {
-        "joblib": "✅" if JOBLIB_AVAILABLE else "❌",
-        "plotly": "✅" if PLOTLY_AVAILABLE else "❌", 
-        "sklearn": "✅" if SKLEARN_AVAILABLE else "❌",
-        "matplotlib": "✅" if MATPLOTLIB_AVAILABLE else "❌"
-    }
     
     for pkg, status in packages_status.items():
         st.write(f"{status} {pkg}")
