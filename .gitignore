@@ -6,9 +6,6 @@ motogp-env/
 __pycache__/
 *.pyc
 
-# Ignore data files
-data/*.csv
-
 # Ignore model checkpoints
 models/*.joblib
 

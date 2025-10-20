@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import sys
 import os
+import requests  
+import os
 
 # Add current directory to Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -97,13 +99,42 @@ st.markdown('<p class="sub-header">Burnout 2025 Finalist | Predict MotoGP lap ti
 
 # Load model function
 @st.cache_resource
+# Load model function
+@st.cache_resource
 def load_model():
     if not JOBLIB_AVAILABLE:
         return None, False
+
+    # --- This is the new logic ---
+    # PASTE THE URL YOU COPIED FROM GITHUB RELEASES HERE
+    MODEL_URL = "https://github.com/Narendersingh007/motogp-laptime-predictor/releases/download/v1.0-model/best_xgb_model.joblib"
+    MODEL_PATH = "models/best_xgb_model.joblib"
+
+    # Check if model file already exists
+    if not os.path.exists(MODEL_PATH):
+        st.info("Downloading model... This may take a moment.")
+        
+        # Ensure the 'models' directory exists
+        os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+        
+        try:
+            # Download the file
+            with requests.get(MODEL_URL, stream=True) as r:
+                r.raise_for_status()
+                with open(MODEL_PATH, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+            st.success("Model downloaded successfully!")
+        except Exception as e:
+            st.error(f"Error downloading model: {e}")
+            return None, False
+    # --- End of new logic ---
+
     try:
-        model = joblib.load('models/best_xgb_model.joblib')
+        model = joblib.load(MODEL_PATH)
         return model, True
     except FileNotFoundError:
+        # This shouldn't happen now, but good to keep as a fallback
         return None, False
     except Exception as e:
         st.error(f"Error loading model: {str(e)}")
