@@ -32,3 +32,4 @@ else:
     sample_data.to_csv(SAMPLE_DATA_PATH, index=False)
 
     print(f"✅ Success! Sample file saved to {SAMPLE_DATA_PATH}")
+    print(f"The average lap time is: {sample_data['Lap_Time_Seconds'].mean()}")
