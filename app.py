@@ -164,8 +164,6 @@ with st.sidebar:
         st.metric("R² Score", "0.87", delta="+0.05")
     
     
-    for pkg, status in packages_status.items():
-        st.write(f"{status} {pkg}")
 
 # Main content tabs
 tab1, tab2, tab3, tab4 = st.tabs(["🔮 Predict", "📈 Analytics", "🎯 Model Info", "📋 About"])
