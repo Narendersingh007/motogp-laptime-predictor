@@ -21,23 +21,21 @@ The live application provides two main features: a real-time prediction form and
 The project is organized to separate the Streamlit app, training notebooks, and helper utilities.
 ```
 motogp-laptime-predictor/
-├── README.md               # Your project's main documentation
+├── README.md               
 ├── app.py                  # The main Streamlit web application
 ├── requirements.txt        # All Python packages needed to run the app
 │
 ├── data/
-│   ├── train.csv           # The full, original training dataset (ignored by Git)
-│   ├── test.csv            # The original test dataset (ignored by Git)
 │   └── train_sample.csv    # The small sample used by the app's analytics tab
 │
 ├── notebooks/
-│   └── from-raw-telemetry-to-optimized-models-motogp-lap.ipynb          # Jupyter Notebooks for EDA and model training
+│   └── from-raw-telemetry-to-optimized-models-motogp-lap.ipynb         
 │
 ├── utils/
 │   └── model.py            # The Python script used to train the final model
 │
-├── .gitignore              # Tells Git which files/folders to ignore
-└── LICENSE                 # Your project's (MIT) license file
+├── .gitignore              
+└── LICENSE               
 ```
 ---
 
