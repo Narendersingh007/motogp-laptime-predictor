@@ -9,3 +9,4 @@ seaborn>=0.12.2
 matplotlib>=3.7.1
 optuna>=3.2.0
 missingno>=0.5.0
+requests>=2.31.0
