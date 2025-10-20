@@ -1,16 +1,43 @@
-# Ignore local environment
+# Ignore local virtual environments
 motogp-env/
 .env/
+venv/
+*.venv
 
-# Ignore Python cache
+# Ignore Python cache files
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Ignore model checkpoints
+# Ignore large/temporary data files specifically
+# Keep train_sample.csv tracked!
+data/train.csv
+data/test.csv
+data/val.csv
+data/kaive's_output.csv
+
+# Ignore temporary scripts in data/
+data/sampler.py
+
+# Ignore large model files
 models/*.joblib
 
 # Ignore Jupyter notebook checkpoints
 notebooks/.ipynb_checkpoints/
 
-# Ignore OS / editor files
+# Ignore OS / editor specific files
 .DS_Store
+.vscode/
+
+# Ignore temporary/utility scripts in root
+new.py
+setup.py
+
+# Ignore archives
+*.zip
+*.tar.gz
+
+# --- Allow specific files ---
+# Ensure the sample data for the app IS tracked
+!data/train_sample.csv
