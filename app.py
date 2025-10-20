@@ -43,7 +43,7 @@ except ImportError:
 
 # Page configuration
 st.set_page_config(
-    page_title="🏍️ MotoGP Lap Time Predictor",
+    page_title="MotoGP Lap Time Predictor",
     page_icon="🏍️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -225,14 +225,70 @@ with tab1:
         submitted = st.form_submit_button("🚀 Predict Lap Time", use_container_width=True)
         
         if submitted:
-            # Create prediction (simplified simulation)
-            base_time = 85 + (circuit_length * 2.5) + (grid_position * 0.15)
-            weather_factor = 1.15 if weather == "Rainy" else 1.03 if weather == "Cloudy" else 1.0
-            tire_factor = 0.97 if tire_front == "Soft" else 1.03 if tire_front == "Hard" else 1.0
-            track_factor = 1.02 if track_condition == "Wet" else 1.01 if track_condition == "Drying" else 1.0
+            if model_loaded:
+                # --- REAL PREDICTION LOGIC (NEEDS DATA PREP) ---
+                
+                #
+                # TODO: This is where you must build the real prediction
+                #
+                st.error("🚧 Real Prediction Not Implemented")
+                st.info("""
+                The real model is loaded, but the prediction logic is not yet built.
+                The model requires ~34 features, but the form only provides ~20.
+                
+                To fix this, you must:
+                1. Create a `prepare_input_data()` function.
+                2. This function must collect all form inputs.
+                3. It must then create a DataFrame with all ~34 columns the model expects.
+                4. It must fill the missing columns with default values (like the mean/median from your training data).
+                5. It must LabelEncode categorical features (like 'Dry'/'Wet') into numbers.
+                6. Finally, it can call `model.predict(prepared_data)`.
+                """)
+
+                # --- SIMULATION AS A TEMPORARY FALLBACK ---
+                st.subheader("Simulation Result (Fallback):")
+                base_time = 85 + (circuit_length * 2.5) + (grid_position * 0.15)
+                weather_factor = 1.15 if weather == "Rainy" else 1.03 if weather == "Cloudy" else 1.0
+                tire_factor = 0.97 if tire_front == "Soft" else 1.03 if tire_front == "Hard" else 1.0
+                track_factor = 1.02 if track_condition == "Wet" else 1.01 if track_condition == "Drying" else 1.0
+                
+                prediction = base_time * weather_factor * tire_factor * track_factor + np.random.normal(0, 0.8)
+
+            else:
+                # --- SIMULATION-ONLY LOGIC ---
+                st.subheader("Simulation Result:")
+                base_time = 85 + (circuit_length * 2.5) + (grid_position * 0.15)
+                weather_factor = 1.15 if weather == "Rainy" else 1.03 if weather == "Cloudy" else 1.0
+                tire_factor = 0.97 if tire_front == "Soft" else 1.03 if tire_front == "Hard" else 1.0
+                track_factor = 1.02 if track_condition == "Wet" else 1.01 if track_condition == "Drying" else 1.0
+                
+                prediction = base_time * weather_factor * tire_factor * track_factor + np.random.normal(0, 0.8)
+
+            # Display prediction
+            st.markdown(f"""
+            <div class="prediction-result">
+                <h2>🏁 Predicted Lap Time</h2>
+                <h1 style="font-size: 3rem; margin: 0;">{prediction:.3f} seconds</h1>
+                <p style="font-size: 1.2rem; margin-top: 1rem;">
+                    Equivalent to {prediction//60:.0f}:{prediction%60:06.3f}
+                </p>
+                {'<p style="color: #FFD700;">⚠️ Using simulation (model not loaded)</p>' if not model_loaded else ''}
+            </div>
+            """, unsafe_allow_html=True)
             
-            prediction = base_time * weather_factor * tire_factor * track_factor + np.random.normal(0, 0.8)
+            # Performance context
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                delta = np.random.uniform(-2.5, 2.5)
+                st.metric("vs Average", f"{prediction:.3f}s", f"{delta:.3f}s")
+            with col2:
+                pace = "🔥 Fast" if prediction < 88 else "⚡ Average" if prediction < 95 else "🐌 Slow"
+                st.metric("Pace Rating", pace, "")
+            with col3:
+                confidence = 95 if model_loaded else 75
+                st.metric("Confidence", f"{confidence}%", "")
             
+            st.session_state.predictions_made += 1
             # Display prediction
             st.markdown(f"""
             <div class="prediction-result">
