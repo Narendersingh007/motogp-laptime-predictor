@@ -1,8 +1,7 @@
 # 🏍️ MotoGP Lap Time Predictor (Burnout 2025 Finalist)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://motogp-laptime-predictor.streamlit.app)
 
 A **Streamlit web app + ML pipeline** that predicts MotoGP rider lap times using a fine-tuned XGBoost model. This project was developed for the **Burnout 2025 Datathon** and features real-time predictions and an interactive analytics dashboard.
-
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://motogp-laptime-predictor.streamlit.app)
 
 ---
 
