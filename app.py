@@ -216,7 +216,7 @@ def load_model():
     MODEL_PATH = "models/best_xgb_model.joblib"
 
     if not os.path.exists(MODEL_PATH):
-        st.info("Downloading model... This may take a moment.")
+        
         os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
         
         try:
@@ -225,7 +225,7 @@ def load_model():
                 with open(MODEL_PATH, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=8192):
                         f.write(chunk)
-            st.success("Model downloaded successfully!")
+           
         except Exception as e:
             st.error(f"Error downloading model: {e}")
             return None, False
@@ -246,8 +246,7 @@ if 'predictions_made' not in st.session_state:
 with st.sidebar:
     if missing_packages:
         st.error(f"❌ Missing packages: {', '.join(missing_packages)}")
-    else:
-        st.success("✅ All required packages installed")
+    
 
     st.markdown("### 🏆 Project Highlights")
     st.info("""
